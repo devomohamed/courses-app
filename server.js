@@ -1,7 +1,10 @@
 const express = require('express')
 var morgan = require('morgan')
 const mongoose = require('mongoose')
+const cors = require('cors')
 require('dotenv').config()
+
+app.use(cors())
 
 const coursesRouter = require('./routes/courses.route')
 const { FAIL } = require('./utils/httpStatusText')
