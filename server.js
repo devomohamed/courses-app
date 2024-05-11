@@ -4,10 +4,9 @@ const mongoose = require('mongoose')
 const cors = require('cors')
 require('dotenv').config()
 
-app.use(cors())
 
 const coursesRouter = require('./routes/courses.route')
-const { FAIL } = require('./utils/httpStatusText')
+const { FAIL, ERROR } = require('./utils/httpStatusText')
 
 const url = process.env.MONGO_URL;
 mongoose.connect(url).then(()=>{console.log("mongodb server started");})
@@ -16,6 +15,8 @@ mongoose.connect(url).then(()=>{console.log("mongodb server started");})
 const app = express()
 const port = process.env.PORT || 3000
 
+
+app.use(cors())
 app.use(morgan('combined'))
 app.use(express.json())
 
@@ -26,7 +27,19 @@ app.all('*',(req,res,next)=>{
     data:null,
     message:"The requested resource was not found."
   })
-}) 
+})
+
+// global error handler
+app.use((error, req , res , next)=>{
+  // console.log(("----------------------------------------"));
+  // console.log(("-----------> ",error," <----------------------------------------"));
+  // console.log(("----------------------------------------"));
+  res.status(error.statusCode || 500).send({
+    status:ERROR,
+    data:null,
+    message:error.message
+  })
+})
 
 
 

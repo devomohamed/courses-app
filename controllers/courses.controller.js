@@ -1,7 +1,9 @@
+const asyncWrapper = require('../middleware/asyncWrapper');
 const Course = require('../models/course.model');
+const appError = require('../utils/appError');
 const { SUCCESS, FAIL, ERROR } = require('../utils/httpStatusText');
 
-const getAllCourses = async(req, res) => {
+const getAllCourses = asyncWrapper(async(req, res,next) => {
   // console.log(Course);
   const query = req.query
   let limit = query.limit || 10,
@@ -14,28 +16,43 @@ const getAllCourses = async(req, res) => {
   // }
   // console.log(courses);
   res.send({status:SUCCESS,data:{courses,totalRecords}})
-}
+})
 
-const getSingleCourse = async(req, res) => {
-  try{
+const getSingleCourse = asyncWrapper(
+  async(req, res, next) => {
     const course = await Course.findById(req.params.id)
-  if (!course) {
-    res.status(404).send({status:FAIL,data:null,message:'The course with the given ID was not found.'})
-  }
-  res.send({status:SUCCESS,data:{course}})
-  }catch(e){
-    res.status(500).send({status:ERROR,data:null,message:e.message})
-  }
-}
+    if (!course) {
+      const error = new appError(404,'The course with the given ID was not found.')
+      // error.message = 'The course with the given ID was not found.'
+      // error.statusCode = 404
+      return next(error)
+      // return  res.status(404).send({status:FAIL,data:null,message:'The course with the given ID was not found.'})
+    }
+    return res.send({status:SUCCESS,data:{course}})
+    // try{
+    
+    // }catch(e){
+    //   res.status(500).send({status:ERROR,data:null,message:e.message})
+    // }
+})
 
-const addCourse = async(req, res) => {
-  try{
-    const {title , price} = req.body
+const addCourse = asyncWrapper( async(req, res,next) => {
+  const {title , price} = req.body
+    // const error = new Error()
+      
     if(!title){
-      return res.status(400).send({status:FAIL,data:null,message:'Title is required'})
+      const error = new appError(404,'Title is required')
+      // error.message = 'Title is required'
+      // error.statusCode = 404
+      return next(error)
+      // return res.status(400).send({status:FAIL,data:null,message:'Title is required'})
     }
     if(!price){
-      return res.status(400).send({status:FAIL,data:null,message:'Price is required'})
+      const error = new appError(404,'Price is required')
+      // error.message = 'price is required'
+      // error.statusCode = 404
+      return next(error)
+      // return res.status(400).send({status:FAIL,data:null,message:'Price is required'})
     }
     const course =  new Course({
       title,
@@ -43,16 +60,22 @@ const addCourse = async(req, res) => {
     })
     await course.save()
     res.status(201).send({status:SUCCESS,data:{course}})
-  }catch(e){
-    console.log(e);
-    res.status(500).send({status:ERROR,data:null,message:e.message})
-  }
-}
+  // try{
+    
+  // }catch(e){
+  //   console.log(e);
+  //   res.status(500).send({status:ERROR,data:null,message:e.message})
+  // }
+})
 
-const updateCourse = async(req,res)=>{
+const updateCourse = asyncWrapper( async(req,res,next)=>{
   let course = await Course.findById(req.params.id)
   if (!course) {
-    res.status(404).send({status:FAIL,data:null,message:'The course with the given ID was not found.'})
+    const error = new appError(404,'The course with the given ID was not found.')
+      // error.message = 'The course with the given ID was not found.'
+      // error.statusCode = 404
+      return next(error)
+    // res.status(404).send({status:FAIL,data:null,message:'The course with the given ID was not found.'})
   }
 
   const {title , price} = req.body
@@ -63,26 +86,30 @@ const updateCourse = async(req,res)=>{
   course = await Course.findById(req.params.id)
   
   res.send({status:SUCCESS,data:{course}})
+})
+
+
+const deleteCourse = asyncWrapper( async(req,res,next)=>{
+
+  let course = await Course.findById(req.params.id)
+
+  console.log(course);
+if (!course) {
+  const error = new appError(404,'The course with the given ID was not found.')
+      // error.message = 'The course with the given ID was not found.'
+      // error.statusCode = 404
+      return next(error)
+  // res.status(404).send({status:FAIL,data:null,message:'The course with the given ID was not found.'})
 }
 
+const deletedCourse = await Course.findByIdAndDelete(req.params.id)
 
-const deleteCourse = async(req,res)=>{
-
-  try{
-    let course = await Course.findById(req.params.id)
-  
-    console.log(course);
-  if (!course) {
-    res.status(404).send({status:FAIL,data:null,message:'The course with the given ID was not found.'})
-  }
-  
-  const deletedCourse = await Course.findByIdAndDelete(req.params.id)
-  
-  res.send({status:SUCCESS,data:null})
-  }catch(e){
-    res.status(500).send({status:ERROR,data:null,message:e.message})
-  }
-}
+res.send({status:SUCCESS,data:null})
+  // try{
+  // }catch(e){
+  //   res.status(500).send({status:ERROR,data:null,message:e.message})
+  // }
+})
 
 
 module.exports = {
