@@ -6,10 +6,11 @@ require('dotenv').config()
 
 
 const coursesRouter = require('./routes/courses.route')
+const usersRouter = require('./routes/users.route')
 const { FAIL, ERROR } = require('./utils/httpStatusText')
 
 const url = process.env.MONGO_URL;
-mongoose.connect(url).then(()=>{console.log("mongodb server started");})
+mongoose.connect(url).then(()=>{console.log("mongodb server started");}).catch(error=>{console.log(e.message);})
 
 
 const app = express()
@@ -21,6 +22,7 @@ app.use(morgan('combined'))
 app.use(express.json())
 
 app.use('/api/courses',coursesRouter)
+app.use('/api/users',usersRouter)
 app.all('*',(req,res,next)=>{
   res.status(404).send({
     status:FAIL,
