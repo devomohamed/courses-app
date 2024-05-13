@@ -10,7 +10,7 @@ const usersRouter = require('./routes/users.route')
 const { FAIL, ERROR } = require('./utils/httpStatusText')
 
 const url = process.env.MONGO_URL;
-mongoose.connect(url).then(()=>{console.log("mongodb server started");}).catch(error=>{console.log(e.message);})
+mongoose.connect(url).then(()=>{console.log("mongodb server started");}).catch(error=>{console.log(error.message);})
 
 
 const app = express()

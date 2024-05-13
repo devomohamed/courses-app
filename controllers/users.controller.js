@@ -1,4 +1,5 @@
 var bcrypt = require('bcryptjs');
+var jwt = require('jsonwebtoken');
 
 const asyncWrapper = require('../middleware/asyncWrapper');
 const User = require('../models/user.model');
@@ -27,14 +28,17 @@ const register = asyncWrapper(async(req, res, next) => {
   if(!password) return next(new appError(400,"password is required."));
   if(!email) return next(new appError(400,"email is required."));
 
-  const oldUser = await User.find({email})
+  const oldUser = await User.findOne({email})
   console.log(oldUser);
-  if(oldUser[0]) return next(new appError(400,"User is already exists"));
+  if(oldUser) return next(new appError(400,"User is already exists"));
 
   const passwordHash = await bcrypt.hash(password,10)
-  console.log(passwordHash,"passwordHash");
+  
+  const user = new User({firstName, lastName, email, password:passwordHash},process.env.SECRET_KEY)
+  
+  const token = await jwt.sign({ email: user.email,id:user._id }, 'shhhhh');
+  console.log(token,"token");
 
-  const user = await User.create({firstName, lastName, email, password:passwordHash})
   user.save()
   return res.status(201).send({status:SUCCESS,data:{user}})
 })
@@ -45,16 +49,17 @@ const login = asyncWrapper(async(req, res, next) => {
   
   if(!email && !password) return next(new appError(400,"email and password is required."));
   
-  const oldUser = await User.find({email})
-  if(!oldUser[0]) return next(new appError(400,"User is not exists"));
+  const oldUser = await User.findOne({email:email})
+  if(!oldUser) return next(new appError(400,"User is not exists"));
   
-  const comparedPassword = await bcrypt.compare(password,oldUser[0].password)
+  const comparedPassword = await bcrypt.compare(password,oldUser.password)
+  console.log(oldUser,comparedPassword);
 
-  if(oldUser && comparedPassword) return next(new appError(400,"Error in Email Or Password."));
+  if(!oldUser || !comparedPassword) return next(new appError(400,"Error in Email Or Password."));
   console.log(comparedPassword,"comparedPassword");
 
   // const users = await User.create()
-  return res.send({status:SUCCESS,data:{users}})
+  return res.send({status:SUCCESS,data:{oldUser}})
 })
 
 module.exports = {
